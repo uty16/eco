@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, orientation=landscape">
+    <title>Eco Adventure: Misi Penyelamat Bumi</title>
+    <style>
+        /* === CSS RESET & BASE STYLES === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+
+        /* === GAME CONTAINER (Landscape Constraint) === */
+        #game-container {
+            width: 100%;
+            max-width: 1024px;
+            aspect-ratio: 16/9;
+            background: linear-gradient(to bottom, #AEC6CF 0%, #E6E6FA 100%);
+            /* Biru Langit Pastel ke Lavender */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+        }
+
+        /* === HEADS UP DISPLAY (HUD) === */
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: none;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        .hud-box {
+            background: #FFFDD0;
+            padding: 10px 25px;
+            border-radius: 25px;
+            border: 3px solid #A8E6CF;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 18px;
+        }
+
+        /* === SCREEN MANAGEMENT === */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            background-size: cover;
+            background-position: bottom;
+        }
+
+        .active {
+            display: flex;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* === CLOUD ANIMATIONS === */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: moveClouds linear infinite;
+            z-index: 0;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .c1 {
+            width: 120px;
+            height: 40px;
+            top: 10%;
+            left: -150px;
+            animation-duration: 35s;
+        }
+
+        .c1::before {
+            width: 60px;
+            height: 60px;
+            top: -25px;
+            left: 15px;
+        }
+
+        .c1::after {
+            width: 50px;
+            height: 50px;
+            top: -15px;
+            left: 60px;
+        }
+
+        @keyframes moveClouds {
+            100% {
+                transform: translateX(1200px);
+            }
+        }
+
+        /* === TYPOGRAPHY & COMPONENTS === */
+        h1 {
+            color: #2c3e50;
+            font-size: 42px;
+            margin-bottom: 15px;
+            z-index: 1;
+            text-shadow: 2px 2px 0px #FFF;
+        }
+
+        h2 {
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+
+        p {
+            color: #444;
+            font-size: 20px;
+            background: rgba(255, 253, 208, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 700px;
+            z-index: 1;
+            border: 2px solid #FFFACD;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background-color: #A8E6CF;
+            border: 3px solid #fff;
+            color: #2c3e50;
+            padding: 12px 35px;
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 5px 0 #7db8a3;
+            transition: all 0.2s;
+            z-index: 1;
+        }
+
+        .btn:hover {
+            background-color: #FFFACD;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #e6e1b8;
+        }
+
+        .btn:active {
+            box-shadow: 0 0 0 #7db8a3;
+            transform: translateY(5px);
+        }
+
+        input {
+            padding: 15px;
+            font-size: 22px;
+            border-radius: 15px;
+            border: 3px solid #A8E6CF;
+            text-align: center;
+            width: 350px;
+            outline: none;
+            margin-bottom: 20px;
+            z-index: 1;
+        }
+
+        /* === GAME ELEMENTS === */
+        .flex-row {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            z-index: 1;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #A8E6CF;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 20px;
+            font-weight: bold;
+            width: 200px;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            background: #FFFACD;
+        }
+
+        .trash-bin {
+            width: 150px;
+            height: 180px;
+            border-radius: 10px;
+            border: 4px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .trash-bin:hover {
+            transform: scale(1.05);
+        }
+
+        .bin-hijau {
+            background-color: #4CAF50;
+        }
+
+        .bin-biru {
+            background-color: #2196F3;
+        }
+
+        .bin-merah {
+            background-color: #F44336;
+        }
+
+        /* Level 2 Target */
+        #floating-trash {
+            position: absolute;
+            background: #FFFACD;
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 3px solid #ffcc00;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            z-index: 50;
+            transition: top 0.5s, left 0.5s;
+        }
+
+        /* Certificate */
+        #certificate-box {
+            background: #FFFDD0;
+            border: 10px solid #A8E6CF;
+            border-radius: 20px;
+            padding: 40px;
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        #certificate-box h1 {
+            font-family: 'Georgia', serif;
+            font-size: 50px;
+            color: #d4af37;
+            text-shadow: none;
+        }
+
+        /* Profile */
+        .profile-container {
+            background: #FFFDD0;
+            border: 5px solid #A8E6CF;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: left;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <div class="cloud c1"></div>
+
+        <div id="hud">
+            <div class="hud-box">👤 <span id="player-name-display">Pemain</span></div>
+            <div class="hud-box">⭐ Poin: <span id="player-score">0</span></div>
+        </div>
+
+        <div id="screen-opening" class="screen active">
+            <h1>Eco Adventure:<br>Misi Penyelamat Bumi</h1>
+            <p>Mari berpetualang dan belajar menyelamatkan bumi kita dari sampah!</p>
+            <div class="flex-row">
+                <button class="btn" onclick="showScreen('screen-input')">Mulai Bermain</button>
+                <button class="btn" style="background-color: #E6E6FA;" onclick="showScreen('screen-profile')">Profil
+                    Penyusun</button>
+            </div>
+        </div>
+
+        <div id="screen-input" class="screen">
+            <h2>Halo, Penjelajah Cilik!</h2>
+            <p>Siapa namamu?</p>
+            <input type="text" id="input-name" placeholder="Ketik namamu di sini..." autocomplete="off">
+            <br>
+            <button class="btn" onclick="saveName()">Lanjut</button>
+        </div>
+
+        <div id="screen-story" class="screen">
+            <h2>Bumi Sedang Menangis 😢</h2>
+            <p>Halo, <strong id="story-name"></strong>! Bumi kita sedang sakit karena banyak sampah dibuang sembarangan.
+                Sungai kotor, hewan terdampak, dan lingkungan tercemar. Karakter utamamu butuh bantuanmu untuk
+                menyelesaikan misi lingkungan dan mengembalikan bumi menjadi bersih dan hijau kembali!</p>
+            <button class="btn" onclick="startMateri()">Pelajari Misi</button>
+        </div>
+
+        <div id="screen-materi" class="screen">
+            <h2 id="materi-title">Judul Materi</h2>
+            <p id="materi-desc">Deskripsi materi akan muncul di sini.</p>
+            <div class="flex-row" id="materi-visuals"></div>
+            <div class="flex-row">
+                <button class="btn" id="btn-materi-next" onclick="nextMateri()">Selanjutnya ➔</button>
+                <button class="btn" id="btn-materi-play" style="display:none;" onclick="showScreen('screen-map')">Mulai
+                    Petualangan!</button>
+            </div>
+        </div>
+
+        <div id="screen-map" class="screen">
+            <h2>Peta Petualangan</h2>
+            <p>Selesaikan misi di setiap area untuk memulihkan bumi!</p>
+            <div class="flex-row">
+                <button class="btn" id="btn-lvl1" onclick="startLevel1()">Level 1: Hutan Bersih</button>
+                <button class="btn" id="btn-lvl2" style="background-color:#ccc;" onclick="startLevel2()" disabled>Level
+                    2: Pantai Biru 🔒</button>
+                <button class="btn" id="btn-lvl3" style="background-color:#ccc;" onclick="startLevel3()" disabled>Level
+                    3: Kota Ramah 🔒</button>
+                <button class="btn" id="btn-quiz" style="background-color:#ccc;" onclick="startQuiz()" disabled>Quiz
+                    Akhir 🔒</button>
+            </div>
+        </div>
+
+        <div id="screen-level1" class="screen">
+            <h2>Level 1: Hutan Bersih 🌳</h2>
+            <p>Pilih tong sampah yang tepat untuk <strong>Kulit Pisang</strong>!</p>
+            <div class="flex-row">
+                <div class="trash-bin bin-hijau" onclick="checkLevel1('organik')">Organik</div>
+                <div class="trash-bin bin-biru" onclick="checkLevel1('anorganik')">Anorganik</div>
+                <div class="trash-bin bin-merah" onclick="checkLevel1('b3')">B3</div>
+            </div>
+        </div>
+
+        <div id="screen-level2" class="screen">
+            <h2>Level 2: Pantai Biru 🌊</h2>
+            <p>Cepat tangkap (klik) 3 sampah plastik yang mengapung sebelum hilang!</p>
+            <button class="btn" id="btn-start-lvl2" onclick="spawnTrash()">Mulai Tangkap</button>
+            <div id="floating-trash" onclick="catchTrash()">🥤 Botol Plastik</div>
+        </div>
+
+        <div id="screen-level3" class="screen">
+            <h2>Level 3: Kota Ramah Lingkungan 🏙️</h2>
+            <p>Kamu melihat seseorang membuang sampah sembarangan di taman. Apa yang harus kamu lakukan?</p>
+            <div class="flex-row">
+                <div class="card" onclick="checkLevel3(false)">Ikut membuang sampah di sana</div>
+                <div class="card" onclick="checkLevel3(true)">Mengingatkan dengan sopan & membuang ke tempat sampah
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-quiz" class="screen">
+            <h2 id="quiz-question">Pertanyaan Quiz</h2>
+            <div class="flex-row" id="quiz-options"></div>
+        </div>
+
+        <div id="screen-result" class="screen">
+            <h2>Petualangan Selesai! 🎉</h2>
+            <p>Skor Akhir: <strong id="final-score">0</strong> Poin</p>
+            <p>Badge Kamu: <strong id="final-badge" style="color: #4CAF50; font-size: 24px;">Penjelajah Pemula</strong>
+            </p>
+            <button class="btn" onclick="generateCertificate()">Lihat Sertifikat</button>
+        </div>
+
+        <div id="screen-certificate" class="screen">
+            <div id="certificate-box">
+                <h1>SERTIFIKAT PENGHARGAAN</h1>
+                <p>Diberikan kepada:</p>
+                <h2 id="cert-name" style="font-size: 36px; margin: 15px 0;">Nama Pemain</h2>
+                <p>Telah berhasil menyelesaikan seluruh petualangan dalam <strong>Eco Adventure: Misi Penyelamat
+                        Bumi</strong></p>
+                <p>dan dianugerahi gelar:</p>
+                <h2 id="cert-badge" style="color: #4CAF50; margin: 15px 0;">Penyelamat Bumi</h2>
+                <p style="font-size: 14px; margin-top: 20px;">Diberikan pada: <span id="cert-date"></span></p>
+            </div>
+            <button class="btn" onclick="location.reload()">Main Lagi</button>
+        </div>
+
+        <div id="screen-profile" class="screen">
+            <h2>Profil Penyusun</h2>
+            <div class="profile-container">
+                <strong>Program Studi Pendidikan Guru Sekolah Dasar (PGSD)</strong><br>
+                Fakultas Keguruan dan Ilmu Pendidikan<br>
+                Universitas Majalengka<br><br>
+                <ul>
+                    <li>Putery Nurani Uang Ramadhani (2422101141)</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="showScreen('screen-opening')">Kembali</button>
+        </div>
+    </div>
+
+    <script>
+        /* === GLOBAL STATE === */
+        let state = {
+            name: "",
+            score: 0,
+            materiIndex: 0,
+            trashCaught: 0,
+            quizIndex: 0,
+            levelUnlocks: { lvl2: false, lvl3: false, quiz: false }
+        };
+
+        /* === DATA MATERI === */
+        const materiData = [
+            { title: "Materi 1: Apa Itu Sampah?", desc: "Sampah adalah sisa kegiatan manusia yang sudah tidak digunakan lagi. Jika dibuang sembarangan, bisa menyebabkan penyakit dan banjir." },
+            { title: "Materi 2: Sampah Organik", desc: "Sampah yang mudah terurai (kulit buah, daun). Bisa diolah jadi pupuk kompos." },
+            { title: "Materi 3: Sampah Anorganik", desc: "Sampah yang sulit terurai (botol plastik, kaleng). Harus didaur ulang." },
+            { title: "Materi 4: Sampah B3", desc: "Mengandung bahan berbahaya (baterai, lampu). Harus dibuang di tempat khusus." },
+            { title: "Cara Menjaga Lingkungan", desc: "Buang sampah pada tempatnya, pilah sampah, dan tanam pohon!" }
+        ];
+
+        /* === DATA QUIZ === */
+        const quizData = [
+            { q: "Sampah botol plastik sebaiknya dibuang ke tong sampah warna?", options: ["Hijau (Organik)", "Biru (Anorganik)", "Merah (B3)"], answer: 1, explanation: "Plastik adalah anorganik yang bisa didaur ulang." },
+            { q: "Apa dampak membuang sampah sembarangan di sungai?", options: ["Ikan bertambah banyak", "Menyebabkan banjir", "Air menjadi jernih"], answer: 1, explanation: "Sampah akan menyumbat aliran air dan menyebabkan banjir." },
+            { q: "Kulit apel termasuk jenis sampah apa?", options: ["Organik", "Anorganik", "B3"], answer: 0, explanation: "Kulit buah mudah terurai secara alami." }
+        ];
+
+        /* === CORE FUNCTIONS === */
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('hud').style.display = ['screen-opening', 'screen-input', 'screen-profile', 'screen-certificate'].includes(id) ? 'none' : 'flex';
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('player-name-display').innerText = state.name;
+            document.getElementById('player-score').innerText = state.score;
+        }
+
+        function addScore(points) {
+            state.score += points;
+            updateHUD();
+        }
+
+        /* === FLOW FUNCTIONS === */
+        function saveName() {
+            const input = document.getElementById('input-name').value;
+            if (!input) return alert("Isi namamu dulu ya!");
+            state.name = input;
+            document.getElementById('story-name').innerText = state.name;
+            showScreen('screen-story');
+        }
+
+        // Materi Flow
+        function startMateri() { state.materiIndex = 0; renderMateri(); showScreen('screen-materi'); }
+        function renderMateri() {
+            const data = materiData[state.materiIndex];
+            document.getElementById('materi-title').innerText = data.title;
+            document.getElementById('materi-desc').innerText = data.desc;
+
+            if (state.materiIndex === materiData.length - 1) {
+                document.getElementById('btn-materi-next').style.display = 'none';
+                document.getElementById('btn-materi-play').style.display = 'block';
+            }
+        }
+        function nextMateri() { state.materiIndex++; renderMateri(); }
+
+        // Map Unlocks
+        function unlockMap(btnId) {
+            let btn = document.getElementById(btnId);
+            btn.style.backgroundColor = "#A8E6CF";
+            btn.disabled = false;
+            btn.innerText = btn.innerText.replace(" 🔒", "");
+            showScreen('screen-map');
+        }
+
+        // Level 1 Logic
+        function startLevel1() { showScreen('screen-level1'); }
+        function checkLevel1(type) {
+            if (type === 'organik') {
+                alert("Hebat! Kulit pisang adalah sampah Organik.");
+                addScore(50);
+                unlockMap('btn-lvl2');
+            } else {
+                alert("Belum tepat. Kulit pisang mudah terurai, jadi termasuk sampah Organik.");
+            }
+        }
+
+        // Level 2 Logic (FIXED)
+        function startLevel2() {
+            showScreen('screen-level2');
+            state.trashCaught = 0;
+            document.getElementById('btn-start-lvl2').style.display = 'block';
+        }
+
+        function spawnTrash() {
+            document.getElementById('btn-start-lvl2').style.display = 'none';
+            let trash = document.getElementById('floating-trash');
+            trash.style.display = 'block';
+
+            let moveInterval = setInterval(() => {
+                if (state.trashCaught >= 3) {
+                    clearInterval(moveInterval);
+                    trash.style.display = 'none';
+                    setTimeout(() => {
+                        alert("Hore! Pantai sudah bersih.");
+                        addScore(50);
+                        unlockMap('btn-lvl3');
+                    }, 300);
+                    return;
+                }
+                trash.style.display = 'block';
+                trash.style.top = Math.floor(Math.random() * 60) + 20 + "%";
+                trash.style.left = Math.floor(Math.random() * 80) + 10 + "%";
+            }, 1000);
+        }
+
+        function catchTrash() {
+            state.trashCaught++;
+            addScore(10);
+            document.getElementById('floating-trash').style.display = 'none';
+        }
+
+        // Level 3 Logic
+        function startLevel3() { showScreen('screen-level3'); }
+        function checkLevel3(isCorrect) {
+            if (isCorrect) {
+                alert("Keren! Kamu berhasil membantu menjaga lingkungan.");
+                addScore(50);
+                unlockMap('btn-quiz');
+            } else {
+                alert("Itu belum tepat. Ingat materi tadi, kita harus menegur dengan sopan dan membuangnya ke tempat sampah.");
+            }
+        }
+
+        // Quiz Logic
+        function startQuiz() { state.quizIndex = 0; renderQuiz(); showScreen('screen-quiz'); }
+        function renderQuiz() {
+            if (state.quizIndex >= quizData.length) return endQuiz();
+
+            const qData = quizData[state.quizIndex];
+            document.getElementById('quiz-question').innerText = qData.q;
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = "";
+
+            qData.options.forEach((opt, idx) => {
+                let btn = document.createElement('div');
+                btn.className = 'card';
+                btn.innerText = opt;
+                btn.onclick = () => checkQuiz(idx, qData.answer, qData.explanation);
+                optionsContainer.appendChild(btn);
+            });
+        }
+        function checkQuiz(selected, correct, explanation) {
+            if (selected === correct) {
+                alert("Benar! +10 Poin");
+                addScore(10);
+            } else {
+                alert(`Salah. Penjelasan: ${explanation}`);
+            }
+            state.quizIndex++;
+            renderQuiz();
+        }
+        function endQuiz() {
+            addScore(100);
+            document.getElementById('final-score').innerText = state.score;
+
+            let badge = "Penjelajah Pemula";
+            if (state.score >= 250) badge = "Penyelamat Bumi";
+            else if (state.score >= 150) badge = "Penyelamat Lingkungan";
+            else if (state.score >= 100) badge = "Penjelajah Hebat";
+
+            document.getElementById('final-badge').innerText = badge;
+            showScreen('screen-result');
+        }
+
+        // Certificate
+        function generateCertificate() {
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            document.getElementById('cert-name').innerText = state.name;
+            document.getElementById('cert-badge').innerText = document.getElementById('final-badge').innerText;
+            document.getElementById('cert-date').innerText = dateStr;
+
+            showScreen('screen-certificate');
+
+            for (let i = 0; i < 30; i++) {
+                let conf = document.createElement('div');
+                conf.style.position = 'absolute';
+                conf.style.width = '10px'; conf.style.height = '10px';
+                conf.style.backgroundColor = ['#f44336', '#4caf50', '#2196f3', '#ffeb3b'][Math.floor(Math.random() * 4)];
+                conf.style.left = Math.random() * 100 + "vw";
+                conf.style.top = "-10px";
+                conf.style.zIndex = "1000";
+                conf.style.transition = "top 3s linear";
+                document.body.appendChild(conf);
+                setTimeout(() => { conf.style.top = "100vh"; }, 50);
+                setTimeout(() => { conf.remove(); }, 3000);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
